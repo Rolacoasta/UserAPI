@@ -85,3 +85,9 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+
+# SQLite database file
+users.db
+
+#Berkeley course
+lab00/
