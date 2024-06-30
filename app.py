@@ -1,11 +1,12 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
+import os
 
 app = Flask(__name__)
 
 # Configure the SQLite database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'users.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -56,7 +57,7 @@ def create_user():
 @app.route('/users/<int:id>', methods=['GET'])
 def get_user(id):
     try:
-        user = User.query.get(id)
+        user = db.session.get(User, id)
 
         if user is None:
             return jsonify({"error": "User not found"}), 404
@@ -75,7 +76,7 @@ def get_all_users():
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
-#Endpoint to return the number count of all users in the database.
+# Endpoint to return the number count of all users in the database.
 @app.route('/users/count', methods=['GET'])
 def get_user_count():
     try:
@@ -84,9 +85,49 @@ def get_user_count():
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
 
+# Endpoint to update a user (PUT /users/<id>)
+@app.route('/users/<int:id>', methods=['PUT'])
+def update_user(id):
+    try:
+        data = request.get_json()
+
+        if not data or 'name' not in data or 'email' not in data:
+            return jsonify({"error": "Invalid input"}), 400
+        
+        user = db.session.get(User, id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        user.name = data['name']
+        user.email = data['email']
+
+        db.session.commit()
+
+        return jsonify({"id": user.id, "name": user.name, "email": user.email}), 200
+    
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
+# Endpoint to delete a user (DELETE /users/<id>)
+@app.route('/users/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    try:
+        user = db.session.get(User, id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        db.session.delete(user)
+        db.session.commit()
+
+        return jsonify({"message": "User deleted"}), 200
+    
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred", "details": str(e)}), 500
+
 # Initialize the database
 with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
+    os.makedirs(app.instance_path, exist_ok=True)
     app.run(debug=True)
