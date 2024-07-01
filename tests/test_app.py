@@ -1,10 +1,4 @@
 import pytest
-import sys
-import os
-
-# Ensure the app module can be found by adding the parent directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from app import app, db, User
 
 # Fixture to set up the test client and in-memory SQLite database
