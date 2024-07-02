@@ -89,5 +89,9 @@ coverage.xml
 # SQLite database file
 users.db
 
+#SQLite Browser
+SQLite/
+
 #Berkeley course
 lab00/
+
